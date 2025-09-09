@@ -1,0 +1,4 @@
+fastapi[standard]
+aiosqlite
+sqlalchemy
+greenlet (У меня установилась сразу с алхимией)
