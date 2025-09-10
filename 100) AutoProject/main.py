@@ -2,13 +2,18 @@ from http.client import HTTPException
 from fastapi import FastAPI
 from pydantic import BaseModel, Field, ConfigDict
 import uvicorn
+import sqlite3
 
+engine = create_engine('sqlite+aiosqlite:///book.db')
 
 app = FastAPI()
 
-# Класс для валидации
-class CarSchema(BaseModel): 
+
+class MetaSchema(BaseModel):
     id: int = Field(ge = 1)
+    
+# Класс для валидации вытомобилей
+class CarSchema(MetaSchema): 
     brand: str = Field(max_length=200) # Если мы не указываем | None то поле считается обязательным
     model: str = Field(max_length=200) 
     price: int = Field(gt = 0) # grated or equal (ge) больше или равен. less or equal (le) меньше или равен
@@ -18,7 +23,12 @@ class CarSchema(BaseModel):
 
     model_config = ConfigDict(extra="forbid") # Буквально - запрети дополнительные параметры
 
-cars = []
+class UserSchema(MetaSchema):
+    first_name: str = Field(max_length=100)
+    last_name: str = Field(max_length=100)
+    age: int = Field(gt = 18)
+    credit_rating: int = Field(gt = 1, le = 10)
+    work_plase: str | None = Field(max_length=100)
 
 
 
