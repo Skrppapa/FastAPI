@@ -2,12 +2,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session, declarative_base
 from fastapi import Depends
 
-# create_engine создает "движок" базы данных, который позволяет приложению взаимодействовать с БД. 
+# create_engine создает "движок" базы данных, который позволяет приложению взаимодействовать с БД.
 # Управляет подключениями к БД и предоставляет интерфейс для выполнения SQL-запросов.
 
 # declarative_base создает базовый класс для моделей. Позволяет определять модели как классы Python, которые будут автоматически сопоставлены с таблицами в БД.
 
-# sessionmaker создает сессии для работы с БД. Сессия - временное хранилище для объектов, которые мы хотим сохранить в БД. 
+# sessionmaker создает сессии для работы с БД. Сессия - временное хранилище для объектов, которые мы хотим сохранить в БД.
 
 Base = declarative_base()
 
@@ -33,4 +33,3 @@ def get_session():
 # Создание всех таблиц
 def init_db():
     Base.metadata.create_all(bind=engine)
-
