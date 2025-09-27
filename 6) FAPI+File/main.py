@@ -61,6 +61,3 @@ if __name__ == '__main__':
 # Активация . fileenv\Scripts\activate
 
 # uvicorn main:app --reload
-
-
-# Закончил урок с файлами на 4:30

@@ -16,6 +16,21 @@ init_db()
 def root():
     return "Main Page"
 
+
+@app.get("/cars/", tags = ["Автомобили"], summary = "Список всех автомобилей", response_model=list[CarSchema])
+def read_cars(skip: int = 0, limit: int = 10, db: Session = Depends(get_session)):
+    cars = db.query(Car).offset(skip).limit(limit).all()
+    return cars
+    # skip: int = 0 - сколько записей нужно пропустить перед отображением
+    # limit: int = 10 - максимум 10 записей
+    # db: Session = Depends(get_session) - говорит вызвать функцию из database.py
+
+# db.query(Car) - метод создает запрос к таблице cars. Он возвращает объект запроса.
+# .offset(skip) - метод указывает, сколько записей нужно пропустить.
+# .limit(limit) - метод указывает максимальное количество записей, которые нужно вернуть.
+# .all() - выполняет запрос и возвращает все результаты в виде списка объектов Car.
+
+
 @app.post("/cars/", tags = ["Автомобили"], summary = "Добавить автомобиль")
 def add_car(car: CarSchema, db: Session = Depends(get_session)): # car: CarSchema - валидация FAPI под капотом валидирует через схему CarSchema
     # db: Session = Depends(get_session) - через get_session получает сессию. В рамках этой сессии мы и будем действовать
@@ -39,20 +54,6 @@ def add_car(car: CarSchema, db: Session = Depends(get_session)): # car: CarSchem
     db.commit()
     db.refresh(db_car) # Обновление
     return {"ok": True, "msg": "Автомобоиль успешно добавлен!"}
-
-
-@app.get("/cars/", tags = ["Автомобили"], summary = "Список всех автомобилей", response_model=list[CarSchema])
-def read_cars(skip: int = 0, limit: int = 10, db: Session = Depends(get_session)):
-    cars = db.query(Car).offset(skip).limit(limit).all()
-    return cars
-    # skip: int = 0 - сколько записей нужно пропустить перед отображением
-    # limit: int = 10 - максимум 10 записей
-    # db: Session = Depends(get_session) - говорит вызвать функцию из database.py
-
-# db.query(Car) - метод создает запрос к таблице cars. Он возвращает объект запроса.
-# .offset(skip) - метод указывает, сколько записей нужно пропустить.
-# .limit(limit) - метод указывает максимальное количество записей, которые нужно вернуть.
-# .all() - выполняет запрос и возвращает все результаты в виде списка объектов Car.
 
 
 @app.delete("/cars/{car_id}", tags=["Автомобили"], summary="Удалить автомобиль по ID")
