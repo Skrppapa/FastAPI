@@ -1,6 +1,5 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session, declarative_base
-from fastapi import Depends
+from sqlalchemy.orm import sessionmaker, declarative_base, Session
 
 # create_engine создает "движок" базы данных, который позволяет приложению взаимодействовать с БД.
 # Управляет подключениями к БД и предоставляет интерфейс для выполнения SQL-запросов.
@@ -9,12 +8,11 @@ from fastapi import Depends
 
 # sessionmaker создает сессии для работы с БД. Сессия - временное хранилище для объектов, которые мы хотим сохранить в БД.
 
-Base = declarative_base()
-
 # Создание базы данных SQLite
 DATABASE_URL = "sqlite:///./cars.db"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base() # От declarative_base наследуются все наши таблицы - класс Base в том числе импортируется отсюда в модели
 
 # check_same_thread=False для разрешения использования одного и того же соединения из разных потоков. Параметр позволяет избежать ошибок, при работе в многопоточном режиме.
 
@@ -22,14 +20,28 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # autoflush=False - изменения в сессии не будут автоматически отправляться в БД пока не будет вызвано flush() или commit()
 
 
+# Создание всех таблиц
+def init_db():
+    Base.metadata.create_all(bind=engine)
+
+
+# функция init_db должна отрабатывать каждый раз при запуске
+
+# Для этого - ниже написан красивый подход "Ленивая инициализация"
+
+_db_initialized = False # Индикатор инициализированности
+
+def ensure_db_initialized(): # Если таблиц нет - инициализируем
+    global _db_initialized
+    if not _db_initialized:
+        init_db()
+        _db_initialized = True
+
 # Функция для получения сессии
 def get_session():
+    ensure_db_initialized()  # гарантируем инициализацию при первом запросе
     session = SessionLocal()
     try:
         yield session
     finally:
         session.close()
-
-# Создание всех таблиц
-def init_db():
-    Base.metadata.create_all(bind=engine)

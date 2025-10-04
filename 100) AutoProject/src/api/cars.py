@@ -1,23 +1,13 @@
-import uvicorn
-from fastapi import FastAPI, HTTPException, Depends
-from sqlalchemy.orm import Session
-from database import init_db, get_session # БД
-from schemas import CarSchema, UserSchema # Валидация
-from models import Car, User # Модели таблиц
-
-app = FastAPI()
-
-# Инициализация БД
-
-init_db()
+from fastapi import APIRouter, HTTPException, Depends
+from src.schemas.cars import CarSchema # Валидация
+from src.models.cars import Car # Модели таблиц
+from src.database import get_session, Session
 
 
-@app.get('/')
-def root():
-    return "Main Page"
+router = APIRouter()  # Вместо app используем router
 
 
-@app.get("/cars/", tags = ["Автомобили"], summary = "Список всех автомобилей", response_model=list[CarSchema])
+@router.get("/cars/", tags = ["Cars"], summary = "Список всех автомобилей", response_model=list[CarSchema])
 def read_cars(skip: int = 0, limit: int = 10, db: Session = Depends(get_session)):
     cars = db.query(Car).offset(skip).limit(limit).all()
     return cars
@@ -31,7 +21,7 @@ def read_cars(skip: int = 0, limit: int = 10, db: Session = Depends(get_session)
 # .all() - выполняет запрос и возвращает все результаты в виде списка объектов Car.
 
 
-@app.post("/cars/", tags = ["Автомобили"], summary = "Добавить автомобиль")
+@router.post("/cars/", tags = ["Cars"], summary = "Добавить автомобиль")
 def add_car(car: CarSchema, db: Session = Depends(get_session)): # car: CarSchema - валидация FAPI под капотом валидирует через схему CarSchema
     # db: Session = Depends(get_session) - через get_session получает сессию. В рамках этой сессии мы и будем действовать
 
@@ -56,7 +46,7 @@ def add_car(car: CarSchema, db: Session = Depends(get_session)): # car: CarSchem
     return {"ok": True, "msg": "Автомобоиль успешно добавлен!"}
 
 
-@app.delete("/cars/{car_id}", tags=["Автомобили"], summary="Удалить автомобиль по ID")
+@router.delete("/cars/{car_id}", tags=["Cars"], summary="Удалить автомобиль по ID")
 def delete_car(car_id: int, db: Session = Depends(get_session)):
     # Ищем машину в базе
     db_car = db.query(Car).filter(Car.id == car_id).first()
@@ -78,7 +68,7 @@ def delete_car(car_id: int, db: Session = Depends(get_session)):
 
 
 
-@app.put("/cars/{car_id}", tags=["Автомобили"], summary="Обновить автомобиль по ID")
+@router.put("/cars/{car_id}", tags=["Cars"], summary="Обновить автомобиль по ID")
 def update_car(
     car_id: int,
     car_update: CarSchema,  # Данные для обновления
@@ -100,14 +90,3 @@ def update_car(
     db.refresh(db_car)
 
     return { "ok": True, "msg": f"Автомобиль с ID {car_id} успешно обновлен", "car": db_car}
-
-
-
-if __name__ == '__main__':
-    uvicorn.run('main:app')
-
-# Переход cd '100) AutoProject'
-# Активация source venv_auto_linux/bin/activate
-# Активация . venv_auto_win\Scripts\activate
-
-# uvicorn main:app --reload

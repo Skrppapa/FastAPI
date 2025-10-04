@@ -13,12 +13,3 @@ class CarSchema(MetaSchema):
     added: str | None = Field(max_length=1000)
 
     model_config = ConfigDict(extra="forbid") # Буквально - запрети дополнительные параметры
-
-class UserSchema(MetaSchema):
-    first_name: str = Field(max_length=100)
-    last_name: str = Field(max_length=100)
-    age: int = Field(gt = 18)
-    credit_rating: int = Field(gt = 1, le = 10)
-    work_place: str | None = Field(max_length=100)
-
-    model_config = ConfigDict(extra="forbid")
