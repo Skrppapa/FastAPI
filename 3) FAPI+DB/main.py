@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 # async_sessionmaker - для создания сессий
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import select
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 # БД в этом примере будет жить прям в проекте в файлике
@@ -70,6 +70,11 @@ class BookAddSchema(BaseModel):
 class BookSchema(BookAddSchema):
     id: int
 
+class BookGetSchema(BaseModel):
+    id: int
+    title: str
+    author: str
+
 
 @app.post("/books") # Добавляем новую книгу
 async def add_book(data: BookAddSchema, session: SessionDep): # Вот тут мы уже прописали, как раз эту абстракцию она нам и открывает сессию
@@ -90,8 +95,48 @@ async def get_books(session: SessionDep):
     return result.scalars().all()
 
 
-#if __name__ == '__main__':
-#    uvicorn.run('main:app', host='0.0.0.0', port=8000, reload=True)
+
+#==================================Продолжение - урок про Depends===============================
+
+# Тут делаем ручку с пагинацией - то есть порционной выдачей контента
+
+@app.get("/books/limit")
+async def traning_get_books_limit(
+    session: SessionDep,
+    limit: int,   # Лимит, сколько мы хотим получить, например объектов
+    offset: int   # Сдвиг - если например хотим начать посмотр с 4 страницы - укажем сдвиг на 4
+    ) -> list[BookGetSchema]:
+    query = select(BookModel).limit(limit).offset(offset)
+
+    result = await session.execute(query)
+    return result.scalars().all()
+
+
+# Пагинация - удобно. Но вот проблема, допустимм у нас 100 ручек в проекте и в каждой из них я хочу реализовать пагинацию.
+# Каждый раз подобное прописывать - глупо, к тому же это нарушает принццип DRY
+# Выход - это все добро что мы написали можно вынести в зависимости и ипереиспользовать. Как мы это делаем? Через Pydantic (идем к классу PaginationParams)
+
+class PaginationParams(BaseModel): # Можно и через функцию
+    limit: int = Field(5, ge = 0, le = 100, description="Кол-во элементов на странице")
+    offset: int = Field(0, ge = 0, description="Смещение для пагинации")
+
+
+PaginationDep = Annotated[PaginationParams, Depends(PaginationParams)] # Шаблон "Название = Annotated[класс/функция, Depends(класс/функция)]"
+# Это и есть Depend и ее мы можеи использовать сколько угодно раз
+
+@app.get("/books/limited")
+async def get_books_limit(
+    session: SessionDep,
+    pagination: PaginationDep
+    ) -> list[BookGetSchema]:
+    query = select(BookModel).limit(pagination.limit).offset(pagination.offset)
+
+    result = await session.execute(query)
+    return result.scalars().all()
+
+
+if __name__ == '__main__':
+    uvicorn.run('main:app', host='0.0.0.0', port=8000, reload=True)
 
 
 # Перейти cd "3) FAPI+DB"
