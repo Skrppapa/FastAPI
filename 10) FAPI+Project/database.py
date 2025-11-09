@@ -6,7 +6,7 @@ engine = create_async_engine(
     "sqlite+aiosqlite:///task.db"   # название бд + драйвер далее :///название файла БД
 )
 
-session = async_sessionmaker(engine, expire_on_commit = False)
+new_session = async_sessionmaker(engine, expire_on_commit = False)
 
 class Model(DeclarativeBase):
     pass
